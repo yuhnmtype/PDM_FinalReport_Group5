@@ -1,0 +1,148 @@
+package com.evoting.ui;
+
+import com.evoting.dao.ElectionDAO;
+import com.evoting.entity.Election;
+import com.evoting.enums.ElectionStatus;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.util.List;
+
+/**
+ * Election list screen — shows all elections in a table.
+ *
+ * FIX #1  — electionId is now stored in MainFrame via setCurrentElectionId()
+ *            before calling showCard(CARD_VOTING), so VotingPanel always
+ *            receives the correct election.
+ * FIX #5  — loadElections() is called by MainFrame.showCard() every time
+ *            this panel becomes visible (no stale data).
+ * FIX #9  — "Loading…" label shown while SwingWorker fetches data.
+ */
+public class ElectionListPanel extends JPanel {
+
+    private final MainFrame   frame;
+    private final ElectionDAO electionDAO = new ElectionDAO();
+
+    private final DefaultTableModel tableModel = new DefaultTableModel(
+            new String[]{"ID", "Name", "Start", "End", "Status"}, 0) {
+        @Override public boolean isCellEditable(int r, int c) { return false; }
+    };
+
+    private final JTable  table     = new JTable(tableModel);
+    private final JButton btnVote     = new JButton("Vote in Selected Election");
+    private final JButton btnResult   = new JButton("View Results");
+    private final JButton btnChangePw = new JButton("Change Password");
+    private final JButton btnLogout   = new JButton("Logout");
+    private final JLabel  lblUser   = new JLabel("Logged in");
+    private final JLabel  lblStatus = new JLabel(" "); // FIX #9 — loading feedback
+
+    public ElectionListPanel(MainFrame frame) {
+        this.frame = frame;
+        setLayout(new BorderLayout(10, 10));
+        buildUI();
+        wireEvents();
+    }
+
+    private void buildUI() {
+        JLabel title = new JLabel("Available Elections", SwingConstants.CENTER);
+        title.setFont(new Font("SansSerif", Font.BOLD, 18));
+        title.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+
+        JPanel top = new JPanel(new BorderLayout());
+        top.add(title, BorderLayout.CENTER);
+        top.add(lblUser, BorderLayout.EAST);
+        add(top, BorderLayout.NORTH);
+
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.setRowHeight(28);
+        add(new JScrollPane(table), BorderLayout.CENTER);
+
+        // FIX #9 — status label + buttons at bottom
+        lblStatus.setForeground(Color.GRAY);
+        JPanel bottom = new JPanel(new BorderLayout());
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        btnPanel.add(btnResult);
+        btnPanel.add(btnVote);
+        btnPanel.add(btnChangePw);
+        btnPanel.add(btnLogout);
+        btnPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 10));
+        bottom.add(lblStatus, BorderLayout.WEST);
+        bottom.add(btnPanel, BorderLayout.EAST);
+        add(bottom, BorderLayout.SOUTH);
+    }
+
+    private void wireEvents() {
+        btnVote.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row < 0) {
+                JOptionPane.showMessageDialog(this, "Select an election first.");
+                return;
+            }
+
+            int    electionId = (int)    tableModel.getValueAt(row, 0);
+            String status     = (String) tableModel.getValueAt(row, 4);
+
+            if (!ElectionStatus.ACTIVE.name().equals(status)) {
+                JOptionPane.showMessageDialog(this, "This election is not currently active.");
+                return;
+            }
+
+            // FIX #1 — store electionId in MainFrame before switching panel
+            frame.setCurrentElectionId(electionId);
+            frame.showCard(MainFrame.CARD_VOTING); // MainFrame.showCard() calls loadCandidates()
+        });
+
+        btnResult.addActionListener(e -> frame.showCard(MainFrame.CARD_RESULTS));
+
+        btnChangePw.addActionListener(e -> frame.showCard(MainFrame.CARD_CHANGE_PASSWORD));
+
+        btnLogout.addActionListener(e -> {
+            frame.setCurrentVoterId(-1);
+            frame.setCurrentElectionId(-1);
+            frame.showCard(MainFrame.CARD_LOGIN);
+        });
+    }
+
+    /**
+     * Loads all elections from DB and populates the table.
+     * FIX #5 — Called automatically by MainFrame.showCard(CARD_ELECTIONS).
+     * FIX #9 — Shows "Loading…" while worker runs.
+     */
+    public void loadElections() {
+        tableModel.setRowCount(0);
+        lblStatus.setText("Loading elections…"); // FIX #9
+        btnVote.setEnabled(false);
+
+        SwingWorker<List<Election>, Void> worker = new SwingWorker<>() {
+            @Override
+            protected List<Election> doInBackground() throws Exception {
+                return electionDAO.findAll();
+            }
+
+            @Override
+            protected void done() {
+                btnVote.setEnabled(true);
+                try {
+                    List<Election> elections = get();
+                    for (Election e : elections) {
+                        tableModel.addRow(new Object[]{
+                            e.getElectionId(),
+                            e.getElectionName(),
+                            e.getStartDate(),
+                            e.getEndDate(),
+                            e.getStatus().name()
+                        });
+                    }
+                    // FIX #9 — clear loading text, show count
+                    lblStatus.setText(elections.size() + " election(s) found.");
+                } catch (Exception ex) {
+                    lblStatus.setText("Failed to load elections.");
+                    JOptionPane.showMessageDialog(ElectionListPanel.this,
+                            "Failed to load elections: " + ex.getMessage());
+                }
+            }
+        };
+        worker.execute();
+    }
+}
