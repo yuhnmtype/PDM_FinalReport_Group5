@@ -1,0 +1,10 @@
+package com.evoting.repository;
+
+import com.evoting.entity.Voter;
+
+public interface VoterRepository extends Repository<Voter> {
+
+    Voter findByNationalId(String id);
+
+    Voter findByEmail(String email);
+}
