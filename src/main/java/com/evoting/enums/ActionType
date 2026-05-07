@@ -1,0 +1,14 @@
+package com.evoting.enums;
+
+public enum ActionType {
+    REGISTER,
+    LOGIN,
+    LOGOUT,
+    VOTE,
+    TOKEN_ISSUED,
+    TOKEN_CONSUMED,
+    PROFILE_UPDATED,
+    PASSWORD_CHANGED,
+    ACCOUNT_SUSPENDED,
+    ACCOUNT_REACTIVATED
+}
