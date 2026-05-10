@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Elections — VoteSecure</title>
+<link rel="stylesheet" href="/css/style.css"/>
+</head>
+<body>
+<nav class="navbar">
+  <div class="nav-logo">
+    <div class="nav-logo-icon">🗳️</div>
+    <div class="nav-logo-divider"></div>
+    <div><div>VoteSecure</div><div class="nav-logo-sub">Online Voting System</div></div>
+  </div>
+  <div class="nav-right">
+    <div class="nav-user">
+      <div class="nav-avatar" id="nav-avatar">?</div>
+      <span class="nav-user-name" id="nav-name">—</span>
+    </div>
+    <button class="nav-btn" onclick="window.location.href='/pages/change-password.html'">⚙ Settings</button>
+    <button class="nav-btn" onclick="window.location.href='/pages/admin.html'">Admin</button>
+    <button class="nav-btn danger" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="layout">
+  <div class="container fade-in">
+    <div class="page-hdr">
+      <div class="breadcrumb">🏠 Home <span>›</span> Elections</div>
+      <h1>Available Elections</h1>
+      <p>Select an election row then choose an action below. Data loaded live from MySQL.</p>
+    </div>
+
+    <div class="stats-row" id="stats-row">
+      <div class="stat-card"><div class="label">Total Elections</div><div class="value" id="st-elections">—</div><div class="sub">All time</div></div>
+      <div class="stat-card"><div class="label">Active Now</div><div class="value" id="st-active" style="color:var(--green)">—</div><div class="sub">Live voting</div></div>
+      <div class="stat-card"><div class="label">Registered Voters</div><div class="value" id="st-voters">—</div><div class="sub">In database</div></div>
+      <div class="stat-card"><div class="label">Votes Recorded</div><div class="value" id="st-votes">—</div><div class="sub">All elections</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Election Registry</h3>
+        <span id="row-hint" style="font-size:12px;color:var(--muted)">Click a row to select</span>
+      </div>
+      <div class="card-body">
+        <table>
+          <thead>
+            <tr><th>Election ID</th><th>Election Name</th><th>Start Date</th><th>End Date</th><th>Status</th></tr>
+          </thead>
+          <tbody id="tbody">
+            <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:32px">⏳ Loading elections from database...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="action-bar">
+      <button class="btn btn-ghost" onclick="goResults()">📊 View Results</button>
+      <button class="btn btn-primary" onclick="goVote()">🗳️ Vote in Selected Election</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="toast-icon" id="toast-icon"></span><span id="toast-msg"></span></div>
+<script src="/js/app.js"></script>
+<script>
+let elections = [], selected = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const user = Session.require(); if (!user) return;
+  initNavbar();
+  await Promise.all([loadStats(), loadElections()]);
+});
+
+async function loadStats() {
+  try {
+    const s = await apiFetch('/stats');
+    document.getElementById('st-elections').textContent = s.total_elections;
+    document.getElementById('st-active').textContent    = s.active_elections;
+    document.getElementById('st-voters').textContent    = s.total_voters;
+    document.getElementById('st-votes').textContent     = s.total_votes;
+  } catch(e) { console.error(e); }
+}
+
+async function loadElections() {
+  try {
+    elections = await apiFetch('/elections');
+    const tbody = document.getElementById('tbody');
+    if (!elections.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:32px">No elections found.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = elections.map((e, i) => {
+      const start = e.start_date ? e.start_date.slice(0,10) : '—';
+      const end   = e.end_date   ? e.end_date.slice(0,10)   : '—';
+      return `<tr id="row-${i}" onclick="selectRow(${i})">
+        <td style="font-family:monospace;color:var(--muted)">${e.election_id}</td>
+        <td><strong>${e.election_name}</strong></td>
+        <td>${start}</td><td>${end}</td>
+        <td>${badge(e.status)}</td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('tbody').innerHTML =
+      `<tr><td colspan="5" style="text-align:center;color:var(--red);padding:32px">❌ ${e.message}</td></tr>`;
+  }
+}
+
+function selectRow(i) {
+  document.querySelectorAll('#tbody tr').forEach(r => r.classList.remove('selected'));
+  document.getElementById('row-' + i).classList.add('selected');
+  selected = elections[i];
+  document.getElementById('row-hint').textContent = '✓ ' + selected.election_name.split(' ').slice(0,3).join(' ') + '... selected';
+}
+
+function goVote() {
+  if (!selected) { showToast('Please select an election first.', 'warn'); return; }
+  if (selected.status !== 'ACTIVE') { showToast('Only ACTIVE elections can be voted on.', 'warn'); return; }
+  SelElection.set(selected);
+  window.location.href = '/pages/voting.html';
+}
+
+function goResults() {
+  if (selected) SelElection.set(selected);
+  window.location.href = '/pages/results.html';
+}
+</script>
+</body>
+</html>

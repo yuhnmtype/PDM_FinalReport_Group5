@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Cast Vote — VoteSecure</title>
+<link rel="stylesheet" href="/css/style.css"/>
+</head>
+<body>
+<nav class="navbar">
+  <div class="nav-logo">
+    <div class="nav-logo-icon">🗳️</div>
+    <div class="nav-logo-divider"></div>
+    <div><div>VoteSecure</div><div class="nav-logo-sub">Cast Your Vote</div></div>
+  </div>
+  <div class="nav-right">
+    <div class="nav-user">
+      <div class="nav-avatar" id="nav-avatar">?</div>
+      <span class="nav-user-name" id="nav-name">—</span>
+    </div>
+    <button class="nav-btn" onclick="window.location.href='/pages/elections.html'">← Back</button>
+    <button class="nav-btn danger" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="layout">
+  <div class="container fade-in">
+    <div class="page-hdr">
+      <div class="breadcrumb">🏠 <span>›</span> <a href="/pages/elections.html" style="color:var(--accent)">Elections</a> <span>›</span> Cast Vote</div>
+      <h1>Cast Your Vote</h1>
+      <p>Select one candidate and submit your ballot. This cannot be undone.</p>
+    </div>
+
+    <div class="voting-grid">
+      <div>
+        <div class="election-banner">
+          <div class="etag">🟢 ACTIVE ELECTION</div>
+          <h3 id="el-name">Loading...</h3>
+          <p>Cast your vote for the election representative.</p>
+          <div class="election-meta">
+            <span>📅 Start: <strong id="el-start">—</strong></span>
+            <span>📅 End: <strong id="el-end">—</strong></span>
+            <span>🪪 Token: <strong style="color:rgba(255,255,255,.9)">Issued</strong></span>
+          </div>
+        </div>
+        <div id="candidates-list">
+          <div style="text-align:center;padding:40px;color:var(--muted)">⏳ Loading candidates from database...</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="vote-summary-card">
+          <div class="summary-title">Your Ballot Summary</div>
+          <div class="summary-row"><span class="lbl">Election</span><span class="val" id="s-election" style="font-size:12px">—</span></div>
+          <div class="summary-row"><span class="lbl">Voter ID</span><span class="val" style="color:var(--accent)" id="s-voter">—</span></div>
+          <div class="summary-row"><span class="lbl">Token</span><span class="val" style="color:var(--green)">✓ Valid</span></div>
+          <div class="summary-row" style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px">
+            <span class="lbl">Selected</span>
+            <span class="val" id="s-candidate" style="color:var(--muted)">None selected</span>
+          </div>
+        </div>
+        <div class="security-note">🔐 Vote is SHA-256 encrypted and stored anonymously. Token consumed on submission.</div>
+        <button class="btn btn-primary btn-full" id="submit-btn" style="padding:13px;font-size:14px;margin-bottom:10px" onclick="openConfirm()">Submit Vote →</button>
+        <button class="btn btn-ghost btn-full" onclick="window.location.href='/pages/elections.html'">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="modal-confirm">
+  <div class="modal">
+    <span class="modal-icon">🗳️</span>
+    <h3>Confirm Your Vote</h3>
+    <p>You are voting for <strong id="mc-name" style="color:var(--primary)">—</strong>.<br/>This <strong>cannot be undone</strong>. Your one-time token will be consumed.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="document.getElementById('modal-confirm').classList.remove('show')">Cancel</button>
+      <button class="btn btn-primary" id="confirm-btn" onclick="submitVote()">Confirm →</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div class="modal-overlay" id="modal-success">
+  <div class="modal">
+    <span class="modal-icon">✅</span>
+    <h3>Vote Submitted!</h3>
+    <p>Your vote has been encrypted and saved to the database. Thank you for participating!</p>
+    <button class="btn btn-primary btn-full" onclick="window.location.href='/pages/elections.html'">Back to Elections →</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="toast-icon" id="toast-icon"></span><span id="toast-msg"></span></div>
+<script src="/js/app.js"></script>
+<script>
+let selectedCandidate = null, selectedCandidateId = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const user = Session.require(); if (!user) return;
+  initNavbar();
+  const e = SelElection.get();
+  if (!e) { window.location.href = '/pages/elections.html'; return; }
+
+  document.getElementById('el-name').textContent    = e.election_name;
+  document.getElementById('el-start').textContent   = e.start_date?.slice(0,10) || '—';
+  document.getElementById('el-end').textContent     = e.end_date?.slice(0,10) || '—';
+  document.getElementById('s-election').textContent = e.election_name.split(' ').slice(0,3).join(' ')+'…';
+  document.getElementById('s-voter').textContent    = user.id;
+
+  await loadCandidates(e.election_id);
+});
+
+async function loadCandidates(eid) {
+  try {
+    const candidates = await apiFetch(`/elections/${eid}/candidates`);
+    if (!candidates.length) {
+      document.getElementById('candidates-list').innerHTML =
+        '<div style="text-align:center;padding:40px;color:var(--muted)">No candidates found for this election.</div>';
+      return;
+    }
+    document.getElementById('candidates-list').innerHTML =
+      '<div class="candidates-list">' +
+      candidates.map((c,i) => `
+        <div class="candidate-card" id="cc-${i}" onclick="pick(${i},${c.candidate_id},'${c.full_name.replace(/'/g,"\\'")}')">
+          <div class="c-radio"></div>
+          <div class="c-avatar">${c.full_name.split(' ').map(w=>w[0]).slice(0,2).join('')}</div>
+          <div class="c-info">
+            <h4>${c.full_name}</h4>
+            <div class="party">${c.party_affiliation}</div>
+            <div class="manifesto">${c.manifesto || ''}</div>
+          </div>
+        </div>`).join('') + '</div>';
+  } catch(e) {
+    document.getElementById('candidates-list').innerHTML =
+      `<div style="text-align:center;padding:40px;color:var(--red)">❌ ${e.message}</div>`;
+  }
+}
+
+function pick(i, id, name) {
+  document.querySelectorAll('.candidate-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('cc-' + i).classList.add('selected');
+  selectedCandidateId = id; selectedCandidate = name;
+  const el = document.getElementById('s-candidate');
+  el.textContent = name; el.style.color = 'var(--primary)'; el.style.fontWeight = '700';
+}
+
+function openConfirm() {
+  if (!selectedCandidate) { showToast('Please select a candidate first.', 'warn'); return; }
+  document.getElementById('mc-name').textContent = selectedCandidate;
+  document.getElementById('modal-confirm').classList.add('show');
+}
+
+async function submitVote() {
+  const user = Session.get();
+  const e    = SelElection.get();
+  setLoading('confirm-btn', true);
+  try {
+    await apiFetch('/vote', {
+      method: 'POST',
+      body: JSON.stringify({ voter_id: user.id, election_id: e.election_id, candidate_id: selectedCandidateId }),
+    });
+    document.getElementById('modal-confirm').classList.remove('show');
+    setTimeout(() => document.getElementById('modal-success').classList.add('show'), 200);
+  } catch(e) {
+    document.getElementById('modal-confirm').classList.remove('show');
+    showToast('❌ ' + e.message, 'error');
+    setLoading('confirm-btn', false);
+  }
+}
+</script>
+</body>
+</html>

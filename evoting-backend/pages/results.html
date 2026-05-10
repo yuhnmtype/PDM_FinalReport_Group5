@@ -1,0 +1,115 @@
+<!-- RESULTS PAGE -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Results — VoteSecure</title>
+<link rel="stylesheet" href="/css/style.css"/>
+</head>
+<body>
+<nav class="navbar">
+  <div class="nav-logo"><div class="nav-logo-icon">🗳️</div><div class="nav-logo-divider"></div><div><div>VoteSecure</div><div class="nav-logo-sub">Election Results</div></div></div>
+  <div class="nav-right">
+    <div class="nav-user"><div class="nav-avatar" id="nav-avatar">?</div><span class="nav-user-name" id="nav-name">—</span></div>
+    <button class="nav-btn" onclick="window.location.href='/pages/elections.html'">← Back</button>
+    <button class="nav-btn danger" onclick="logout()">Logout</button>
+  </div>
+</nav>
+<div class="layout">
+  <div class="container fade-in">
+    <div class="page-hdr">
+      <div class="breadcrumb">🏠 <span>›</span> <a href="/pages/elections.html" style="color:var(--accent)">Elections</a> <span>›</span> Results</div>
+      <h1>Election Results</h1>
+      <p id="results-sub">Loading results from database...</p>
+    </div>
+    <div class="results-grid">
+      <div class="card">
+        <div class="card-header"><h3>Vote Distribution</h3></div>
+        <div class="card-body" style="padding:24px">
+          <div id="winner-banner"></div>
+          <div id="bars"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>Election Summary</h3></div>
+        <div class="card-body" style="padding:24px">
+          <div style="display:flex;flex-direction:column;gap:13px" id="summary-body">
+            <div style="text-align:center;color:var(--muted);padding:20px">⏳ Loading...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3>Full Candidate Results</h3></div>
+      <div class="card-body">
+        <table><thead><tr><th>#</th><th>Candidate Name</th><th>Party</th><th>Total Votes</th><th>Share</th></tr></thead>
+        <tbody id="results-tbody"><tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">⏳ Loading...</td></tr></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"><span class="toast-icon" id="toast-icon"></span><span id="toast-msg"></span></div>
+<script src="/js/app.js"></script>
+<script>
+const COLORS = ['#1a3f7a','#2f80ed','#3b9ddd','#5ba4cf','#93c5fd'];
+document.addEventListener('DOMContentLoaded', async () => {
+  Session.require(); initNavbar();
+  const e = SelElection.get();
+  if (!e) { window.location.href='/pages/elections.html'; return; }
+  try {
+    const data = await apiFetch(`/elections/${e.election_id}/results`);
+    const { election, results } = data;
+    const total  = results.reduce((s,r)=>s+r.total_votes,0);
+    const winner = results[0];
+    document.getElementById('results-sub').textContent = (election?.election_name||'') + ' — Final Tally';
+
+    // winner banner
+    if (winner) document.getElementById('winner-banner').innerHTML = `
+      <div class="winner-banner">
+        <span class="winner-crown">👑</span>
+        <div class="winner-info">
+          <h4>${winner.full_name}</h4>
+          <div class="wp">${winner.party_affiliation}</div>
+          <div class="wv">${winner.total_votes} vote${winner.total_votes!==1?'s':''} · ${total?((winner.total_votes/total)*100).toFixed(1):0}%</div>
+        </div>
+      </div>`;
+
+    // bars
+    document.getElementById('bars').innerHTML = results.map((r,i)=>{
+      const pct = total ? ((r.total_votes/total)*100).toFixed(1) : 0;
+      return `<div class="chart-bar">
+        <div class="bar-header"><span class="name">${r.full_name}</span><span class="pct">${r.total_votes} vote${r.total_votes!==1?'s':''} · ${pct}%</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:0%;background:${COLORS[i%COLORS.length]}" data-w="${pct}"></div></div>
+      </div>`;
+    }).join('');
+    setTimeout(()=>document.querySelectorAll('.bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),120);
+
+    // summary
+    document.getElementById('summary-body').innerHTML = `
+      <div class="summary-row"><span style="color:var(--muted)">Election ID</span><span style="font-family:monospace;color:var(--accent);font-weight:600">${e.election_id}</span></div>
+      <div class="summary-row"><span style="color:var(--muted)">Total Votes</span><span style="font-size:22px;font-weight:800;color:var(--primary)">${total}</span></div>
+      <div class="summary-row"><span style="color:var(--muted)">Candidates</span><span>${results.length}</span></div>
+      <div class="summary-row"><span style="color:var(--muted)">Status</span><span>${badge(election?.status||'')}</span></div>
+      <div style="border-top:1px solid var(--border);padding-top:13px;margin-top:3px">
+        <div class="summary-row"><span style="color:var(--muted)">Start Date</span><span>${election?.start_date?.slice(0,10)||'—'}</span></div>
+        <div class="summary-row" style="margin-top:10px"><span style="color:var(--muted)">End Date</span><span>${election?.end_date?.slice(0,10)||'—'}</span></div>
+      </div>`;
+
+    // table
+    document.getElementById('results-tbody').innerHTML = results.map((r,i)=>{
+      const pct = total ? ((r.total_votes/total)*100).toFixed(1) : 0;
+      return `<tr>
+        <td><strong style="color:var(--primary)">${i+1}</strong></td>
+        <td><strong>${i===0?'👑 ':''}${r.full_name}</strong></td>
+        <td style="color:var(--muted)">${r.party_affiliation}</td>
+        <td><strong style="font-size:16px;color:var(--primary)">${r.total_votes}</strong></td>
+        <td>${badge(i===0?'ACTIVE':'CLOSED')} <span style="font-size:12px;color:var(--muted);margin-left:4px">${pct}%</span></td>
+      </tr>`;
+    }).join('');
+  } catch(err) {
+    showToast('❌ '+err.message,'error');
+  }
+});
+</script>
+</body>
+</html>
