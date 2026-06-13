@@ -9,16 +9,16 @@
 
 ## Team Members
 
-| Student ID | Name | Role |
+| Student ID | Name | Main Activities |
 |---|---|---|
-| ITITWE24075 | Nguyen Khang Vy | Leader |
-| ITITWE24002 | Nguyen Ngoc Quang Anh | Member |
-| ITITWE24030 | Pham Nguyen Phuc An | Member |
-| ITITWE24068 | Mai Tran Tam | Member |
-| ITITWE24015 | Nguyen Minh Nhan | Member |
-| ITITWE24044 | Nguyen Vo Minh Huy | Member |
-| ITITWE24012 | Phan Nhat Huy | Member |
-| ITITWE24069 | Nguyen Xuan Thanh | Member |
+| ITITWE24075 | Nguyen Khang Vy | frontend, backend |
+| ITITWE24002 | Nguyen Ngoc Quang Anh | Business rule analysis |
+| ITITWE24030 | Pham Nguyen Phuc An | Business rule analysis |
+| ITITWE24068 | Mai Tran Tam | ERD and schema design |
+| ITITWE24015 | Nguyen Minh Nhan | SQL query |
+| ITITWE24044 | Nguyen Vo Minh Huy | ERD and schema design |
+| ITITWE24012 | Phan Nhat Huy | seed data preparation, frontend |
+| ITITWE24069 | Nguyen Xuan Thanh | backend development |
 
 ---
 
@@ -59,7 +59,7 @@ The database consists of eight tables and one view, all normalized to 3NF.
 | voter_election | (voter_id, election_id) | Junction table tracking voter registration and eligibility per election |
 | audit_log | log_id | Records all significant user actions with timestamps |
 | security_event | event_id | Records security incidents such as failed logins and suspicious activity |
-**View:** `v_election_result` — calculates total votes per candidate per election dynamically from the vote table, replacing a stored aggregate table to satisfy 3NF.
+| View: v_election_result |  | Calculates total votes per candidate per election dynamically from the vote table, replacing a stored aggregate table to satisfy 3NF|
 
 ### Key Design Decisions
 
@@ -173,7 +173,7 @@ PORT=3000
 Open MySQL Workbench and run the following files in order:
 ```
 1. PDM_Database_Group5.sql        -- Creates all 8 tables, view, and seed data
-3. patch_results.sql   -- Verifies election results via the view
+2. patch_results.sql   -- Verifies election results via the view
 ```
 
 **5. Start the server**
