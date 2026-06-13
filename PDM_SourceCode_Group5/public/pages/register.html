@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Register — VoteSecure</title>
+<link rel="stylesheet" href="/css/style.css"/>
+</head>
+<body>
+<div class="login-page">
+  <div class="login-left">
+    <div class="login-left-logo">
+      <div class="icon">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <line x1="19" y1="8" x2="19" y2="14"/>
+          <line x1="22" y1="11" x2="16" y2="11"/>
+        </svg>
+      </div>
+      <div><h1>VoteSecure</h1><p>Voter Registration</p></div>
+    </div>
+    <h2>Join the Democratic Process</h2>
+    <p>Register as a voter to participate in upcoming elections. Your account will be reviewed and activated by an administrator.</p>
+    <div class="login-features">
+      <div class="login-feature">
+        <div class="fi">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <span>Account reviewed within 24 hours</span>
+      </div>
+      <div class="login-feature">
+        <div class="fi">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <span>Your data is encrypted and secure</span>
+      </div>
+    </div>
+  </div>
+  <div class="login-right">
+    <div class="form-title">Create Account</div>
+    <div class="form-sub">Fill in your details to register as a voter</div>
+    <div class="alert alert-error"   id="reg-err"></div>
+    <div class="alert alert-success" id="reg-ok"></div>
+    <div class="field"><label>Full Name</label><input type="text"  id="r-name"  placeholder="Nguyen Van A"/></div>
+    <div class="field"><label>National ID</label><input type="text" id="r-nid"  placeholder="NID-XXXX-XXXXX"/></div>
+    <div class="field"><label>Email</label><input type="email" id="r-email" placeholder="your@email.vn"/></div>
+    <div class="field"><label>Phone Number</label><input type="tel" id="r-phone" placeholder="+84901234567"/></div>
+    <div class="field"><label>Password</label><input type="password" id="r-pw" placeholder="Min 6 characters"/></div>
+    <button class="btn btn-primary btn-lg btn-full" id="reg-btn" style="margin-top:6px" onclick="doRegister()">Register →</button>
+    <div class="login-divider"></div>
+    <button class="btn btn-ghost btn-full" onclick="window.location.href='/'">← Back to Login</button>
+  </div>
+</div>
+<script src="/js/app.js"></script>
+<script>
+async function doRegister() {
+  const name  = document.getElementById('r-name').value.trim();
+  const nid   = document.getElementById('r-nid').value.trim();
+  const email = document.getElementById('r-email').value.trim();
+  const phone = document.getElementById('r-phone').value.trim();
+  const pw    = document.getElementById('r-pw').value;
+  const err   = document.getElementById('reg-err');
+  const ok    = document.getElementById('reg-ok');
+
+  err.classList.remove('show'); err.textContent = '';
+  ok.classList.remove('show');  ok.style.display = 'none';
+
+  if (!name || !nid || !email || !pw) {
+    err.textContent = 'Please fill in all required fields.';
+    err.classList.add('show'); return;
+  }
+  if (pw.length < 6) {
+    err.textContent = 'Password must be at least 6 characters.';
+    err.classList.add('show'); return;
+  }
+
+  setLoading('reg-btn', true);
+  try {
+    const data = await apiFetch('/register', {
+      method: 'POST',
+      body: JSON.stringify({ full_name: name, national_id: nid, email, phone_number: phone, password: pw }),
+    });
+    ok.textContent = '✅ ' + data.message;
+    ok.style.display = 'flex'; ok.classList.add('show');
+    setTimeout(() => window.location.href = '/', 2500);
+  } catch (e) {
+    err.textContent = e.message;
+    err.classList.add('show');
+    setLoading('reg-btn', false);
+  }
+}
+</script>
+</body>
+</html>

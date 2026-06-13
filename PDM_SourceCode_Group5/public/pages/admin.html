@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Admin — VoteSecure</title>
+<link rel="stylesheet" href="/css/style.css"/>
+<style>
+.btn-approve {
+  padding:4px 12px;border-radius:6px;border:none;cursor:pointer;
+  font-family:inherit;font-size:11px;font-weight:700;
+  background:var(--green-bg);color:var(--green);border:1px solid var(--green-border);
+  transition:.15s;margin-right:4px;
+}
+.btn-approve:hover { background:var(--green);color:#fff; }
+.btn-suspend {
+  padding:4px 12px;border-radius:6px;border:none;cursor:pointer;
+  font-family:inherit;font-size:11px;font-weight:700;
+  background:var(--red-bg);color:var(--red);border:1px solid var(--red-border);
+  transition:.15s;
+}
+.btn-suspend:hover { background:var(--red);color:#fff; }
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <div class="nav-logo"><div class="nav-logo-icon">🗳️</div><div class="nav-logo-divider"></div><div><div>VoteSecure</div><div class="nav-logo-sub">Admin Dashboard</div></div></div>
+  <div class="nav-right">
+    <span class="nav-badge">ADMIN</span>
+    <button class="nav-btn" onclick="window.location.href='/pages/elections.html'">← Elections</button>
+    <button class="nav-btn danger" onclick="logout()">Logout</button>
+  </div>
+</nav>
+<div class="layout">
+  <div class="container fade-in">
+    <div class="page-hdr"><div class="breadcrumb">🏠 <span>›</span> Admin</div><h1>Admin Dashboard</h1><p>Live data from MySQL database.</p></div>
+    <div class="admin-layout">
+      <div class="admin-sidebar-card">
+        <div class="admin-sidebar-title">Navigation</div>
+        <div class="admin-nav active" onclick="sw('dashboard',this)"><span class="ni">📊</span>Dashboard</div>
+        <div class="admin-nav" onclick="sw('voters',this)"><span class="ni">👥</span>Voters</div>
+        <div class="admin-nav" onclick="sw('elections',this)"><span class="ni">🗳️</span>Elections</div>
+        <div class="admin-nav" onclick="sw('audit',this)"><span class="ni">📋</span>Audit Log</div>
+        <div class="admin-nav" onclick="sw('security',this)"><span class="ni">🛡️</span>Security Events</div>
+      </div>
+      <div>
+        <!-- DASHBOARD -->
+        <div class="admin-section active" id="sec-dashboard">
+          <div class="kpi-grid">
+            <div class="kpi kpi-blue"><div class="kv" id="kv-voters">—</div><div class="kl">Total Voters</div></div>
+            <div class="kpi kpi-green"><div class="kv" id="kv-elections">—</div><div class="kl">Elections</div></div>
+            <div class="kpi kpi-orange"><div class="kv" id="kv-votes">—</div><div class="kl">Votes Cast</div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Recent Activity</h3></div>
+            <div class="card-body"><table>
+              <thead><tr><th>Timestamp</th><th>Voter</th><th>Action</th><th>Details</th></tr></thead>
+              <tbody id="audit-preview"><tr><td colspan="4" style="text-align:center;padding:24px;color:var(--muted)">⏳ Loading...</td></tr></tbody>
+            </table></div>
+          </div>
+        </div>
+
+        <!-- VOTERS -->
+        <div class="admin-section" id="sec-voters">
+          <div class="card">
+            <div class="card-header">
+              <h3>Voter Management</h3>
+              <span id="pending-count" style="font-size:12px;color:var(--yellow);font-weight:600"></span>
+            </div>
+            <div class="card-body"><table>
+              <thead><tr><th>Voter ID</th><th>Full Name</th><th>National ID</th><th>Email</th><th>Status</th><th>Registered</th><th>Action</th></tr></thead>
+              <tbody id="voters-tbody"><tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted)">⏳ Loading...</td></tr></tbody>
+            </table></div>
+          </div>
+          <!-- LEGEND -->
+          <div style="margin-top:12px;display:flex;gap:16px;font-size:12px;color:var(--muted)">
+            <span>PENDING → <b style="color:var(--green)">✓ Approve</b> or <b style="color:var(--red)">✗ Reject</b></span>
+            <span>ACTIVE → <b style="color:var(--red)">✗ Suspend</b></span>
+            <span>SUSPENDED → <b style="color:var(--green)">✓ Activate</b></span>
+          </div>
+        </div>
+
+        <!-- ELECTIONS -->
+        <div class="admin-section" id="sec-elections">
+          <div class="card">
+            <div class="card-header"><h3>Election Management</h3></div>
+            <div class="card-body"><table>
+              <thead><tr><th>ID</th><th>Name</th><th>Start</th><th>End</th><th>Status</th></tr></thead>
+              <tbody id="elections-tbody"><tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">⏳ Loading...</td></tr></tbody>
+            </table></div>
+          </div>
+        </div>
+
+        <!-- AUDIT -->
+        <div class="admin-section" id="sec-audit">
+          <div class="card">
+            <div class="card-header"><h3>Audit Log</h3></div>
+            <div class="card-body"><table>
+              <thead><tr><th>Log ID</th><th>Voter</th><th>Action</th><th>Timestamp</th><th>Details</th></tr></thead>
+              <tbody id="audit-tbody"><tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">⏳ Loading...</td></tr></tbody>
+            </table></div>
+          </div>
+        </div>
+
+        <!-- SECURITY -->
+        <div class="admin-section" id="sec-security">
+          <div class="card">
+            <div class="card-header"><h3>Security Events</h3></div>
+            <div class="card-body"><table>
+              <thead><tr><th>Description</th><th>Type</th><th>Severity</th><th>IP Address</th><th>Timestamp</th></tr></thead>
+              <tbody id="sec-tbody"><tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">⏳ Loading...</td></tr></tbody>
+            </table></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"><span class="toast-icon" id="toast-icon"></span><span id="toast-msg"></span></div>
+<script src="/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  const _u = Session.require(); if (!_u) return;
+  if (_u.role !== 'ADMIN') { alert('Access denied. Admin only.'); window.location.href = '/pages/elections.html'; return; }
+  initNavbar();
+  await Promise.all([loadStats(), loadAuditPreview()]);
+});
+
+async function loadStats() {
+  try {
+    const s = await apiFetch('/stats');
+    document.getElementById('kv-voters').textContent    = s.total_voters;
+    document.getElementById('kv-elections').textContent = s.total_elections;
+    document.getElementById('kv-votes').textContent     = s.total_votes;
+  } catch(e) { console.error(e); }
+}
+
+async function loadAuditPreview() {
+  try {
+    const rows = await apiFetch('/audit-log');
+    document.getElementById('audit-preview').innerHTML = rows.slice(0,5).map(r=>`
+      <tr>
+        <td style="color:var(--muted);font-size:12px">${r.timestamp?.slice(0,16)||'—'}</td>
+        <td>${r.full_name||'—'}</td>
+        <td>${badge(r.action_type)}</td>
+        <td style="font-size:12px;color:var(--muted)">${r.details||''}</td>
+      </tr>`).join('');
+  } catch(e) { console.error(e); }
+}
+
+async function loadVoters() {
+  try {
+    const rows = await apiFetch('/voters');
+    const pending = rows.filter(r => r.status === 'PENDING').length;
+    document.getElementById('pending-count').textContent = pending > 0 ? `⚠️ ${pending} pending approval` : '';
+
+    document.getElementById('voters-tbody').innerHTML = rows.map(r => {
+      let actions = '';
+      if (r.status === 'PENDING') {
+        actions = `
+          <button class="btn-approve" onclick="updateStatus(${r.voter_id},'ACTIVE',this)">✓ Approve</button>
+          <button class="btn-suspend" onclick="updateStatus(${r.voter_id},'SUSPENDED',this)">✗ Reject</button>`;
+      } else if (r.status === 'ACTIVE') {
+        actions = `<button class="btn-suspend" onclick="updateStatus(${r.voter_id},'SUSPENDED',this)">✗ Suspend</button>`;
+      } else if (r.status === 'SUSPENDED') {
+        actions = `<button class="btn-approve" onclick="updateStatus(${r.voter_id},'ACTIVE',this)">✓ Activate</button>`;
+      }
+      return `<tr id="voter-row-${r.voter_id}">
+        <td style="color:var(--muted);font-family:monospace">${r.voter_id}</td>
+        <td><strong>${r.full_name}</strong></td>
+        <td>${r.national_id}</td>
+        <td style="color:var(--muted);font-size:12px">${r.email||'—'}</td>
+        <td id="voter-status-${r.voter_id}">${badge(r.status)}</td>
+        <td style="color:var(--muted);font-size:12px">${r.registration_date?.slice(0,10)||'—'}</td>
+        <td id="voter-action-${r.voter_id}" style="white-space:nowrap">${actions}</td>
+      </tr>`;
+    }).join('');
+  } catch(e) { showToast('❌ '+e.message,'error'); }
+}
+
+async function updateStatus(voter_id, newStatus, btn) {
+  const labels = { ACTIVE:'activate', SUSPENDED:'suspend/reject' };
+  if (!confirm(`Are you sure you want to ${labels[newStatus]||'update'} this voter?`)) return;
+
+  const orig = btn.textContent;
+  btn.disabled = true; btn.textContent = '⏳';
+
+  try {
+    await apiFetch('/update-voter-status', {
+      method: 'POST',
+      body: JSON.stringify({ voter_id, status: newStatus }),
+    });
+    document.getElementById('voter-status-'+voter_id).innerHTML = badge(newStatus);
+
+    let actions = '';
+    if (newStatus === 'ACTIVE')
+      actions = `<button class="btn-suspend" onclick="updateStatus(${voter_id},'SUSPENDED',this)">✗ Suspend</button>`;
+    else if (newStatus === 'SUSPENDED')
+      actions = `<button class="btn-approve" onclick="updateStatus(${voter_id},'ACTIVE',this)">✓ Activate</button>`;
+    document.getElementById('voter-action-'+voter_id).innerHTML = actions;
+
+    const msgs = { ACTIVE:'✅ Voter activated!', SUSPENDED:'Voter suspended.' };
+    showToast(msgs[newStatus]||'Status updated.', newStatus==='ACTIVE'?'success':'info');
+
+    const pending = document.querySelectorAll('#voters-tbody .btn-approve').length;
+    document.getElementById('pending-count').textContent = pending > 0 ? `⚠️ ${pending} pending approval` : '';
+  } catch(e) {
+    showToast('❌ '+e.message,'error');
+    btn.disabled = false; btn.textContent = orig;
+  }
+}
+
+async function sw(id, el) {
+  document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.admin-nav').forEach(n=>n.classList.remove('active'));
+  document.getElementById('sec-'+id).classList.add('active');
+  el.classList.add('active');
+
+  if (id==='voters') { await loadVoters(); return; }
+
+  if (id==='elections' && document.getElementById('elections-tbody').textContent.includes('Loading')) {
+    try {
+      const rows = await apiFetch('/elections');
+      document.getElementById('elections-tbody').innerHTML = rows.map(r=>`
+        <tr>
+          <td style="color:var(--muted);font-family:monospace">${r.election_id}</td>
+          <td><strong>${r.election_name}</strong></td>
+          <td>${r.start_date?.slice(0,10)||'—'}</td>
+          <td>${r.end_date?.slice(0,10)||'—'}</td>
+          <td>${badge(r.status)}</td>
+        </tr>`).join('');
+    } catch(e) { showToast('❌ '+e.message,'error'); }
+  }
+
+  if (id==='audit' && document.getElementById('audit-tbody').textContent.includes('Loading')) {
+    try {
+      const rows = await apiFetch('/audit-log');
+      document.getElementById('audit-tbody').innerHTML = rows.map(r=>`
+        <tr>
+          <td style="color:var(--muted);font-family:monospace">${r.log_id}</td>
+          <td>${r.full_name||'—'}</td>
+          <td>${badge(r.action_type)}</td>
+          <td style="color:var(--muted);font-size:12px">${r.timestamp?.slice(0,16)||'—'}</td>
+          <td style="font-size:12px;color:var(--muted)">${r.details||''}</td>
+        </tr>`).join('');
+    } catch(e) { showToast('❌ '+e.message,'error'); }
+  }
+
+  if (id==='security' && document.getElementById('sec-tbody').textContent.includes('Loading')) {
+    try {
+      const rows = await apiFetch('/security-events');
+      document.getElementById('sec-tbody').innerHTML = rows.map(r=>`
+        <tr>
+          <td style="font-size:12px;color:var(--muted)">${r.description||'—'}</td>
+          <td style="font-size:12px">${r.event_type||'—'}</td>
+          <td>${badge(r.severity)}</td>
+          <td style="font-size:12px;color:var(--muted)">${r.ip_address||'—'}</td>
+          <td style="font-size:12px;color:var(--muted)">${r.timestamp?.slice(0,16)||'—'}</td>
+        </tr>`).join('');
+    } catch(e) { showToast('❌ '+e.message,'error'); }
+  }
+}
+</script>
+</body>
+</html>
