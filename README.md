@@ -73,7 +73,7 @@ The database consists of eight tables and one view, all normalized to 3NF.
 ## Project Structure
 
 ```
-evoting-backend/
+PDM_SourceCode_Group5/
 ├── server.js               Entry point: Express app, middleware, route mounting
 ├── .env                    Environment variables (DB credentials, port)
 ├── config/
@@ -152,7 +152,7 @@ cd PDM_FinalReport_Group5
 
 **2. Install dependencies**
 ```bash
-cd evoting-backend
+cd PDM_SourceCode_Group5
 npm install
 ```
 
@@ -172,8 +172,7 @@ PORT=3000
 
 Open MySQL Workbench and run the following files in order:
 ```
-1. database.sql        -- Creates all 8 tables, view, and seed data
-2. patch_role.sql      -- Sets admin role for the admin account
+1. PDM_Database_Group5.sql        -- Creates all 8 tables, view, and seed data
 3. patch_results.sql   -- Verifies election results via the view
 ```
 
