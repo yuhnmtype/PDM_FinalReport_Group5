@@ -11,14 +11,14 @@
 
 | Student ID | Name | Main Activities |
 |---|---|---|
-| ITITWE24075 | Nguyen Khang Vy | frontend, backend |
+| ITITWE24075 | Nguyen Khang Vy | Frontend, Backend |
 | ITITWE24002 | Nguyen Ngoc Quang Anh | Business rule analysis |
 | ITITWE24030 | Pham Nguyen Phuc An | Business rule analysis |
 | ITITWE24068 | Mai Tran Tam | ERD and schema design |
 | ITITWE24015 | Nguyen Minh Nhan | SQL query |
 | ITITWE24044 | Nguyen Vo Minh Huy | ERD and schema design |
-| ITITWE24012 | Phan Nhat Huy | seed data preparation, frontend |
-| ITITWE24069 | Nguyen Xuan Thanh | backend development |
+| ITITWE24012 | Phan Nhat Huy | Seed data preparation, Frontend |
+| ITITWE24069 | Nguyen Xuan Thanh | Backend development |
 
 ---
 
@@ -227,11 +227,7 @@ All tables were verified against 1NF, 2NF, and 3NF requirements.
 |---|---|
 | PDM_Database_Group5.sql | Full database schema and seed data |
 | README.md | This file |
+| PDM_SourceCode_Group5 | Backend Frontend |
 
 ---
 
-## Course Information
-
-Vietnam National University Ho Chi Minh City — International University  
-IT079IU — Principles of Database Management  
-Academic Year 2024–2025
