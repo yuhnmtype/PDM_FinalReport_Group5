@@ -1,237 +1,239 @@
-# 🗳️ Online Voting System Database
+# VoteSecure — Online Voting System
 
-**Group 5 | Topic 19 | Principles of Database Management (IT079IU)**
-**Vietnam National University – HCMC, International University**
-**Instructor: Assoc. Prof. Dr. Nguyễn Thị Thúy Loan**
-
-[![Java](https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://www.java.com)
-[![MySQL](https://img.shields.io/badge/MySQL-00758F?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com)
-[![Swing](https://img.shields.io/badge/UI-Java%20Swing-blue?style=for-the-badge)](https://docs.oracle.com/javase/tutorial/uiswing/)
+**Course:** Principles of Database Management (IT079IU)  
+**Institution:** International University, Vietnam National University Ho Chi Minh City  
+**Instructor:** Assoc. Prof. Dr. Nguyen Thi Thuy Loan  
+**Topic:** 19 — Online Voting System Database  
 
 ---
 
-## 👥 Team Members
+## Team Members
 
 | Student ID | Name | Role |
 |---|---|---|
-| ITITWE24075 | Nguyễn Khang Vỹ | Leader |
-| ITITWE24002 | Nguyễn Ngọc Quang Anh | Member |
-| ITITWE24030 | Phạm Nguyễn Phúc An | Member |
-| ITITWE24068 | Mai Trần Tâm | Member |
-| ITITWE24015 | Nguyễn Minh Nhân | Member |
-| ITITWE24044 | Nguyễn Võ Minh Huy | Member |
-| ITITWE24012 | Phan Nhật Huy | Member |
-| ITITWE24069 | Nguyễn Xuân Thành | Member |
+| ITITWE24075 | Nguyen Khang Vy | Leader |
+| ITITWE24002 | Nguyen Ngoc Quang Anh | Member |
+| ITITWE24030 | Pham Nguyen Phuc An | Member |
+| ITITWE24068 | Mai Tran Tam | Member |
+| ITITWE24015 | Nguyen Minh Nhan | Member |
+| ITITWE24044 | Nguyen Vo Minh Huy | Member |
+| ITITWE24012 | Phan Nhat Huy | Member |
+| ITITWE24069 | Nguyen Xuan Thanh | Member |
 
 ---
 
-## 📌 About The Project
+## Project Overview
 
-The **Online Voting System Database** is a desktop-based e-voting application designed to replace traditional paper-based voting methods with a secure, efficient, and transparent digital platform. The system enables administrators to manage elections, register voters, maintain candidate information, and generate voting results — while voters can securely authenticate, browse available elections, and cast ballots following the **one voter – one vote** principle.
+VoteSecure is a web-based election management platform developed as a final project for the Principles of Database Management course. The system allows registered voters to log in, view available elections, and cast votes in real time. Administrators can manage voter accounts, monitor audit logs, and review security events through a dedicated dashboard.
 
-The database is implemented using MySQL and follows the **relational model normalized to Third Normal Form (3NF)**, ensuring data integrity, minimal redundancy, and protection against update anomalies.
-
----
-
-## ✨ Key Features
-
-- 🔐 **Voter Authentication** — National ID + password login with PENDING/ACTIVE status flow
-- 📋 **Self-Registration** — New voters register themselves; accounts require admin approval
-- 🗳️ **Secure Ballot Casting** — One-time token mechanism prevents double-voting atomically
-- 📊 **Results Dashboard** — Any authenticated voter can query live vote tallies by election ID
-- 🔑 **Password Management** — In-session password change with server-side verification
-- 📜 **Audit Logging** — Every LOGIN, VOTE_CAST, TOKEN_ISSUED, LOGOUT, and PASSWORD_CHANGED event is recorded with timestamp
-- 🛡️ **Security Event Tracking** — Anomalous system events (SQL injection attempts, DDoS, etc.) are logged with severity levels
+The database backend is implemented in MySQL and consists of eight tables normalized to Third Normal Form (3NF). A token-based voting mechanism ensures each voter can cast exactly one vote per election. Vote records are stored with SHA-256 encrypted payloads and all significant actions are recorded in an audit log. The application layer is built with Node.js and Express.js, exposing a RESTful API to a multi-page frontend built with HTML, CSS, and JavaScript.
 
 ---
 
-## 🏗️ System Architecture
+## Technology Stack
 
-The application follows a strict **3-layer architecture**:
-
-```
-┌─────────────────────────────────────────┐
-│        Presentation Layer               │
-│   Java Swing GUI (LoginPanel,           │
-│   VotingPanel, ResultsPanel, ...)        │
-├─────────────────────────────────────────┤
-│        Business Logic Layer             │
-│   Plain Java Classes + Enums            │
-│   (Voter, Election, Token, Vote, ...)   │
-├─────────────────────────────────────────┤
-│        Data Access Layer                │
-│   JDBC + DAO Classes                    │
-│   (VoterDAO, ElectionDAO, VoteDAO, ...) │
-├─────────────────────────────────────────┤
-│        MySQL Database                   │
-│   onlinevotingsystem (9 tables)         │
-└─────────────────────────────────────────┘
-```
-
-No layer skips another — the Presentation Layer only calls the Business Logic Layer, which in turn calls the Data Access Layer.
+| Category | Tool / Technology |
+|---|---|
+| Database | MySQL 8.0 |
+| Backend Runtime | Node.js v20 |
+| Web Framework | Express.js 4 |
+| DB Connector | mysql2/promise |
+| Config | dotenv |
+| Frontend | HTML5, CSS3, Vanilla JavaScript |
+| Design Tool | ERDPlus.com |
+| Version Control | GitHub, VS Code Live Share |
 
 ---
 
-## 🗂️ Project Structure
+## Database Schema
 
-```
-PDM_SourceCode_Group5/
-├── lib/
-│   └── mysql-connector-j-9.7.0.jar
-└── src/main/java/com/evoting/
-    ├── dao/                        # Data Access Objects (JDBC)
-    │   ├── AuditLogDAO.java
-    │   ├── CandidateDAO.java
-    │   ├── ElectionDAO.java
-    │   ├── TokenDAO.java
-    │   ├── VoteDAO.java
-    │   └── VoterDAO.java
-    ├── entity/                     # Domain model (POJOs)
-    │   ├── BaseEntity.java
-    │   ├── AuditLog.java
-    │   ├── Ballot.java
-    │   ├── Candidate.java
-    │   ├── Election.java
-    │   ├── ElectionResult.java
-    │   ├── SecurityEvent.java
-    │   ├── Token.java
-    │   ├── Vote.java
-    │   ├── Voter.java
-    │   └── VoterElection.java
-    ├── enums/
-    │   ├── ActionType.java         # REGISTER, LOGIN, VOTE, TOKEN_ISSUED, ...
-    │   ├── ElectionStatus.java     # UPCOMING, ACTIVE, CLOSED, VERIFIED
-    │   ├── Severity.java           # LOW, MEDIUM, HIGH, CRITICAL
-    │   └── VoterStatus.java        # PENDING, ACTIVE, SUSPENDED, DEACTIVATED
-    ├── repository/
-    │   ├── Repository.java
-    │   └── VoterRepository.java
-    ├── ui/                         # Java Swing panels
-    │   ├── MainFrame.java          # CardLayout container & router
-    │   ├── LoginPanel.java
-    │   ├── RegisterPanel.java
-    │   ├── ElectionListPanel.java
-    │   ├── VotingPanel.java
-    │   ├── ResultsPanel.java
-    │   └── ChangePasswordPanel.java
-    └── util/
-        └── DatabaseConnection.java # Singleton DB connection
-```
-
----
-
-## 🗃️ Database Schema
-
-The system uses the `onlinevotingsystem` MySQL database with **9 tables** normalized to 3NF:
+The database consists of eight tables and one view, all normalized to 3NF.
 
 | Table | Primary Key | Description |
 |---|---|---|
-| `voter` | `voter_id` | Registered citizens; tracks national_id, email, status |
-| `election` | `election_id` | Electoral events with start/end dates and status lifecycle |
-| `candidate` | `candidate_id` | Candidates per election with party affiliation and manifesto |
-| `ballot` | `ballot_id` | Ballot type, language, and accessibility options per election |
-| `token` | `token_id` | Single-use authorization credentials issued per voter per election |
-| `vote` | `vote_id` | Immutable encrypted vote records referencing candidate, election, ballot, token |
-| `election_result` | `result_id` | Certified aggregate vote totals per candidate |
-| `audit_log` | `log_id` | Timestamped record of all voter actions |
-| `security_event` | `event_id` | Anomalous/security-relevant system events with severity |
-| `voter_election` | `(voter_id, election_id)` | Associative table resolving voter ↔ election many-to-many |
+| voter | voter_id | Registered users with role (VOTER/ADMIN) and status (PENDING/ACTIVE/SUSPENDED) |
+| election | election_id | Election events with status (UPCOMING/ACTIVE/CLOSED/VERIFIED) |
+| candidate | candidate_id | Candidates linked to a specific election, with party and manifesto |
+| token | token_id | One-time voting tokens issued per voter per election |
+| vote | vote_id | Encrypted vote records linked to a token and candidate |
+| voter_election | (voter_id, election_id) | Junction table tracking voter registration and eligibility per election |
+| audit_log | log_id | Records all significant user actions with timestamps |
+| security_event | event_id | Records security incidents such as failed logins and suspicious activity |
+**View:** `v_election_result` — calculates total votes per candidate per election dynamically from the vote table, replacing a stored aggregate table to satisfy 3NF.
 
-> All tables satisfy 1NF, 2NF, and 3NF — no partial dependencies or transitive dependencies exist.
+### Key Design Decisions
+
+- `token` enforces a UNIQUE constraint on `(voter_id, election_id)`, preventing duplicate token generation.
+- `vote` references only `token_id` and `candidate_id`. Election context is derived through the token relationship, removing transitive dependencies.
+- `v_election_result` is a view rather than a table, eliminating stored derived data and update anomalies.
+- `voter_election` stores only `eligibility_status` and `registered_at`. The `has_voted` flag was removed because the same information is available through `token.is_used`.
 
 ---
 
-## ⚙️ Setup & Installation
+## Project Structure
+
+```
+evoting-backend/
+├── server.js               Entry point: Express app, middleware, route mounting
+├── .env                    Environment variables (DB credentials, port)
+├── config/
+│   └── db.js               MySQL connection pool using mysql2/promise
+├── controllers/
+│   ├── authController.js   login(), register(), changePassword()
+│   └── voteController.js   castVote() with transaction management
+├── routes/
+│   ├── auth.js             POST /api/login, /api/register, /api/change-password
+│   ├── elections.js        GET /api/elections, /api/elections/:id/candidates, /api/elections/:id/results
+│   ├── votes.js            POST /api/vote
+│   └── admin.js            GET/POST /api/voters, /api/audit-log, /api/security-events, /api/stats
+└── public/
+    ├── index.html          Login page
+    ├── css/style.css       Global stylesheet
+    ├── js/app.js           Shared JavaScript utilities
+    └── pages/
+        ├── register.html
+        ├── elections.html
+        ├── voting.html
+        ├── results.html
+        ├── admin.html
+        └── change-password.html
+```
+
+---
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | /api/login | Authenticate voter using national_id and password |
+| POST | /api/register | Register new voter (status defaults to PENDING) |
+| POST | /api/change-password | Update password and log action to audit_log |
+| GET | /api/elections | Return all elections ordered by election_id DESC |
+| GET | /api/elections/:id/candidates | Return candidates for a specific election |
+| GET | /api/elections/:id/results | Return live vote counts via v_election_result |
+| POST | /api/vote | Cast vote within a database transaction |
+| GET | /api/stats | Return total voters, elections, votes, active elections |
+| GET | /api/voters | Return all voter records for admin management |
+| POST | /api/update-voter-status | Update voter status (ACTIVE / SUSPENDED / PENDING) |
+| GET | /api/audit-log | Return audit log with voter names joined |
+| GET | /api/security-events | Return security event records with voter names joined |
+
+---
+
+## Frontend Pages
+
+| Page | File | Purpose |
+|---|---|---|
+| Login | index.html | National ID and password authentication |
+| Register | register.html | New voter registration (account pending admin approval) |
+| Elections | elections.html | View all elections, select to vote or view results |
+| Voting | voting.html | Select candidate and submit ballot |
+| Results | results.html | View vote counts and winner for selected election |
+| Admin Dashboard | admin.html | Manage voters, view audit log and security events |
+| Change Password | change-password.html | Update account password |
+
+---
+
+## Setup and Installation
 
 ### Prerequisites
 
-- Java JDK 11 or higher
-- MySQL Server 8.x
-- IDE: IntelliJ IDEA or NetBeans (recommended)
+- Node.js v20 or higher
+- MySQL 8.0
+- npm
 
-### Step 1 — Import the Database
+### Steps
 
+**1. Clone the repository**
 ```bash
-mysql -u root -p < PDM_Database_Group5.sql
+git clone https://github.com/yuhnmtype/PDM_FinalReport_Group5.git
+cd PDM_FinalReport_Group5
 ```
 
-Or via MySQL Workbench: **Server → Data Import → select `PDM_Database_Group5.sql`**
-
-### Step 2 — Configure Database Connection
-
-Edit `src/main/resources/db.properties`:
-
-```properties
-db.url=jdbc:mysql://localhost:3306/onlinevotingsystem
-db.username=root
-db.password=YOUR_MYSQL_PASSWORD
+**2. Install dependencies**
+```bash
+cd evoting-backend
+npm install
 ```
 
-### Step 3 — Add MySQL Driver to Classpath
+**3. Configure environment variables**
 
-Add `lib/mysql-connector-j-9.7.0.jar` to your project build path.
+Create a `.env` file in the `evoting-backend/` directory:
+```
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=onlinevoting
+PORT=3000
+```
 
-**In IntelliJ IDEA:**
-`File → Project Structure → Modules → Dependencies → (+) → JARs or Directories`
+**4. Set up the database**
 
-### Step 4 — Run the Application
+Open MySQL Workbench and run the following files in order:
+```
+1. database.sql        -- Creates all 8 tables, view, and seed data
+2. patch_role.sql      -- Sets admin role for the admin account
+3. patch_results.sql   -- Verifies election results via the view
+```
 
-Run `MainFrame.java` as the main entry point. The application launches at 800×600px centered on screen.
+**5. Start the server**
+```bash
+node server.js
+```
+
+The server will start at `http://localhost:3000`.
 
 ---
 
-## 🖥️ Application Screens
+## Demo Credentials
 
-| Screen | Class | Purpose |
+| National ID | Password | Role |
 |---|---|---|
-| Login | `LoginPanel` | Voter authentication via National ID + password |
-| Register | `RegisterPanel` | New voter self-registration (creates PENDING account) |
-| Elections List | `ElectionListPanel` | Browse all elections; only ACTIVE elections allow voting |
-| Voting | `VotingPanel` | Candidate selection and ballot submission with token validation |
-| Results | `ResultsPanel` | View vote tallies per candidate for any election by ID |
-| Change Password | `ChangePasswordPanel` | In-session secure password update |
+| NID-2001-AA001 | 123456 | Admin |
+| NID-1998-BB002 | 123456 | Voter |
+| NID-2002-GG007 | 123456 | Voter |
 
 ---
 
-## 🛠️ Tools & Technologies
+## Seed Data Summary
 
-| Task | Tool / Software |
+| Entity | Count |
 |---|---|
-| ERD Design | Draw.io |
-| Database | MySQL 8.x |
-| Java Interface | Java (NetBeans / VS Code) |
-| Report Writing | MS Word |
-| Presentation | PowerPoint, Canva |
-| Reference Citation | Zotero |
-| Data Generation | Mockaroo + ChatGPT + Claude |
+| Voters | 57 (including 1 admin) |
+| Elections | 5 |
+| Candidates | 15 (3 per election) |
+| Voting Tokens | 21 (13 used) |
+| Votes | 13 |
+| Audit Log Entries | 17 |
+| Security Events | 9 |
 
 ---
 
-## 🔒 Security Design
+## Normalization
 
-- **PreparedStatements** used in all DAO classes to prevent SQL injection
-- **One-time token mechanism** — token consumption and vote insertion are wrapped in a single atomic transaction; either both succeed or both roll back
-- **Audit logging** on all major actions: LOGIN, VOTE_CAST, TOKEN_ISSUED, LOGOUT, PASSWORD_CHANGED
-- **Client-side validation** before every DB call (email regex, min password length 6, required fields)
-- **SwingWorker** offloads all DB operations off the Event Dispatch Thread, preventing UI freezes
+All tables were verified against 1NF, 2NF, and 3NF requirements.
 
-> ⚠️ **Note:** Passwords are currently stored in plain text. BCrypt/Argon2 hashing is identified as a mandatory improvement before any production use.
+**1NF:** All attributes contain atomic, single-valued data. No repeating groups.
 
----
+**2NF:** In composite-key tables such as voter_election, all non-key attributes depend on the full composite key (voter_id, election_id), not a partial subset.
 
-## 📄 Report & Database Files
-
-- 📄 [`PDM_FinalReport_Group5.pdf`](./PDM_FinalReport_Group5.pdf) — Full project report
-- 🗄️ [`PDM_Database_Group5.sql`](./PDM_Database_Group5.sql) — MySQL database dump
+**3NF:** No transitive dependencies. For example, party_affiliation in candidate depends only on candidate_id. Derived values such as total votes are not stored in base tables but calculated through the v_election_result view.
 
 ---
 
-## 📚 References
+## Repository Contents
 
-1. S. El Kafhali, "Blockchain-Based Electronic Voting System," *Mathematical Problems in Engineering*, 2024. https://doi.org/10.1155/2024/5591147
-2. e-Estonia, "World's first mostly online national elections," 2023. https://e-estonia.com
-3. ScienceDirect, "Research on online voting systems," 2022. https://www.sciencedirect.com/science/article/pii/S0740624X2200051X
-4. T. Haarseim & G. Wetherall-Grujić, "Online Voting: The Essentials," *Democracy Technologies*, 2024. https://democracy-technologies.org
-5. Viblo, "Học Singleton Pattern trong 5 phút," 2017. https://viblo.asia/p/hoc-singleton-pattern-trong-5-phut-4P856goOKY3
+| File | Description |
+|---|---|
+| PDM_Database_Group5.sql | Full database schema and seed data |
+| PDM_FinalReport_Group5.pdf | Final project report |
+| README.md | This file |
 
 ---
+
+## Course Information
+
+Vietnam National University Ho Chi Minh City — International University  
+IT079IU — Principles of Database Management  
+Academic Year 2024–2025
