@@ -200,7 +200,7 @@ The server will start at `http://localhost:3000`.
 
 | Entity | Count |
 |---|---|
-| Voters | 57 (including 1 admin) |
+| Voters | 46 (including 1 admin) |
 | Elections | 5 |
 | Candidates | 15 (3 per election) |
 | Voting Tokens | 21 (13 used) |
@@ -227,7 +227,6 @@ All tables were verified against 1NF, 2NF, and 3NF requirements.
 | File | Description |
 |---|---|
 | PDM_Database_Group5.sql | Full database schema and seed data |
-| PDM_FinalReport_Group5.pdf | Final project report |
 | README.md | This file |
 
 ---
